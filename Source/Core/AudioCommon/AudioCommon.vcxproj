@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugFast|x64">
+      <Configuration>DebugFast</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -12,6 +16,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{37D007BD-D66C-4EAF-B56C-BD1AAC340A05}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -23,6 +28,9 @@
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='DebugFast'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -37,12 +45,15 @@
   <ItemGroup>
     <ClCompile Include="aldlist.cpp" />
     <ClCompile Include="AudioCommon.cpp" />
+    <ClCompile Include="CubebStream.cpp" />
+    <ClCompile Include="CubebUtils.cpp" />
     <ClCompile Include="DPL2Decoder.cpp" />
     <ClCompile Include="DSoundStream.cpp" />
     <ClCompile Include="Mixer.cpp" />
     <ClCompile Include="NullSoundStream.cpp" />
     <ClCompile Include="OpenALStream.cpp" />
     <ClCompile Include="SoundStream.cpp" />
+    <ClCompile Include="WASAPIStream.cpp" />
     <ClCompile Include="WaveFile.cpp" />
     <ClCompile Include="XAudio2Stream.cpp" />
     <ClCompile Include="XAudio2_7Stream.cpp">
@@ -55,6 +66,8 @@
     <ClInclude Include="AOSoundStream.h" />
     <ClInclude Include="AudioCommon.h" />
     <ClInclude Include="CoreAudioSoundStream.h" />
+    <ClInclude Include="CubebStream.h" />
+    <ClInclude Include="CubebUtils.h" />
     <ClInclude Include="DPL2Decoder.h" />
     <ClInclude Include="DSoundStream.h" />
     <ClInclude Include="Mixer.h" />
@@ -63,6 +76,7 @@
     <ClInclude Include="OpenSLESStream.h" />
     <ClInclude Include="PulseAudioStream.h" />
     <ClInclude Include="SoundStream.h" />
+    <ClInclude Include="WASAPIStream.h" />
     <ClInclude Include="WaveFile.h" />
     <ClInclude Include="XAudio2Stream.h" />
     <ClInclude Include="XAudio2_7Stream.h" />
@@ -72,6 +86,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(ExternalsDir)soundtouch\SoundTouch.vcxproj">
+      <Project>{ec082900-b4d8-42e9-9663-77f02f6936ae}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(ExternalsDir)cubeb\msvc\cubeb.vcxproj">
       <Project>{ec082900-b4d8-42e9-9663-77f02f6936ae}</Project>
     </ProjectReference>
     <ProjectReference Include="$(CoreDir)Common\Common.vcxproj">

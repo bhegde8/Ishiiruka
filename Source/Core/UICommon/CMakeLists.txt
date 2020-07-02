@@ -1,5 +1,6 @@
 set(SRCS Disassembler.cpp
-         UICommon.cpp)
+         UICommon.cpp
+         AutoUpdate.cpp)
 
 set(LIBS common)
 

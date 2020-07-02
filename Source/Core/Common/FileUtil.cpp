@@ -25,7 +25,9 @@
 #include <io.h>
 #include <objbase.h>  // guid stuff
 #include <shellapi.h>
+#include <ShlObj.h>
 #include <windows.h>
+#include <winerror.h>
 #else
 #include <dirent.h>
 #include <errno.h>
@@ -572,7 +574,28 @@ bool DeleteDirRecursively(const std::string& directory)
 	return success;
 }
 
-// Create directory and copy contents (does not overwrite existing files)
+u64 GetFileModTime(const std::string &filename)
+{
+	struct stat file_info;
+
+	std::string copy(filename);
+	StripTailDirSlashes(copy);
+
+#ifdef _WIN32
+	int result = _tstat64(UTF8ToTStr(copy).c_str(), &file_info);
+#else
+	int result = stat(copy.c_str(), &file_info);
+#endif
+
+  if (result < 0)
+	{
+	  return 0;
+  }
+
+	return file_info.st_mtime;
+}
+
+	// Create directory and copy contents (does not overwrite existing files)
 void CopyDir(const std::string& source_path, const std::string& dest_path)
 {
 	if (source_path == dest_path)
@@ -705,6 +728,37 @@ std::string GetBundleDirectory()
 }
 #endif
 
+std::string GetExePath()
+{
+  static const std::string dolphin_path = [] {
+    std::string result;
+#ifdef _WIN32
+	TCHAR Dolphin_exe_Path[2048];
+	TCHAR Dolphin_exe_Clean_Path[MAX_PATH];
+	GetModuleFileName(nullptr, Dolphin_exe_Path, 2048);
+	if (_tfullpath(Dolphin_exe_Clean_Path, Dolphin_exe_Path, MAX_PATH) != nullptr)
+		result = TStrToUTF8(Dolphin_exe_Clean_Path);
+	else
+		result = TStrToUTF8(Dolphin_exe_Path);
+		result = dolphin_path.substr(0, result.find_last_of('\\'));
+#elif defined(__APPLE__)
+    result = GetBundleDirectory();
+    result = result.substr(0, result.find_last_of("Dolphin.app/Contents/MacOS") + 1);
+#else
+    char dolphin_exe_path[PATH_MAX];
+    ssize_t len = ::readlink("/proc/self/exe", dolphin_exe_path, sizeof(dolphin_exe_path));
+    if (len == -1 || len == sizeof(dolphin_exe_path))
+    {
+      len = 0;
+    }
+    dolphin_exe_path[len] = '\0';
+    result = dolphin_exe_path;
+#endif
+    return result;
+  }();
+  return dolphin_path;
+}
+
 std::string& GetExeDirectory()
 {
 	static std::string DolphinPath;
@@ -734,19 +788,49 @@ std::string& GetExeDirectory()
 	return DolphinPath;
 }
 
+std::string GetHomeDirectory()
+{
+	std::string homeDir;
+#ifdef _WIN32
+	wchar_t *path = nullptr;
+	
+	if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &path))) {
+		char pathStr[MAX_PATH];
+		wcstombs(pathStr, path, MAX_PATH);
+	
+		homeDir = std::string(pathStr);
+		CoTaskMemFree(path);		
+	}
+	else {
+		const char* home = getenv("USERPROFILE");
+		homeDir = std::string(home) + "\\Documents";
+	}
+#else
+	const char* home = getenv("HOME");
+    homeDir = std::string(home);
+#endif
+
+	return homeDir;
+}
+
 std::string GetSysDirectory()
 {
 	std::string sysDir;
 
 #if defined(__APPLE__)
-	sysDir = GetBundleDirectory() + DIR_SEP + SYSDATA_DIR;
+	sysDir = GetBundleDirectory() + DIR_SEP + SYSDATA_DIR + DIR_SEP;
 #elif defined(_WIN32) || defined(LINUX_LOCAL_DEV)
-	sysDir = GetExeDirectory() + DIR_SEP + SYSDATA_DIR;
+	sysDir = GetExeDirectory() + DIR_SEP + SYSDATA_DIR + DIR_SEP;
 #else
-	sysDir = SYSDATA_DIR;
+	const char* home = getenv("HOME");
+	if (!home) home = getenv("PWD");
+	if (!home) home = "";
+	std::string home_path = std::string(home) + DIR_SEP;
+	const char* config_home = getenv("XDG_CONFIG_HOME");
+	sysDir = std::string(config_home && config_home[0] == '/' 
+		? config_home : (home_path + ".config")) 
+		+ DIR_SEP DOLPHIN_DATA_DIR DIR_SEP "Sys" DIR_SEP;
 #endif
-	sysDir += DIR_SEP;
-
 	INFO_LOG(COMMON, "GetSysDirectory: Setting to %s:", sysDir.c_str());
 	return sysDir;
 }
@@ -906,6 +990,11 @@ IOFile::IOFile(const std::string& filename, const char openmode[]) : m_file(null
 	Open(filename, openmode);
 }
 
+IOFile::IOFile(const std::string& filename, const char openmode[], int shflag) : m_file(nullptr), m_good(true)
+{
+	OpenShared(filename, openmode, shflag);
+}
+
 IOFile::~IOFile()
 {
 	Close();
@@ -933,6 +1022,19 @@ bool IOFile::Open(const std::string& filename, const char openmode[])
 	Close();
 #ifdef _WIN32
 	_tfopen_s(&m_file, UTF8ToTStr(filename).c_str(), UTF8ToTStr(openmode).c_str());
+#else
+	m_file = fopen(filename.c_str(), openmode);
+#endif
+
+	m_good = IsOpen();
+	return m_good;
+}
+
+bool IOFile::OpenShared(const std::string& filename, const char openmode[], int shflag)
+{
+	Close();
+#ifdef _WIN32
+	m_file = _tfsopen(UTF8ToTStr(filename).c_str(), UTF8ToTStr(openmode).c_str(), shflag);
 #else
 	m_file = fopen(filename.c_str(), openmode);
 #endif

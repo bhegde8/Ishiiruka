@@ -66,18 +66,20 @@ set(GUI_SRCS
 	LogWindow.cpp
 	Main.cpp
 	MainMenuBar.cpp
+	PlaybackSlider.cpp
 	MainToolBar.cpp
 	MemcardManager.cpp
 	PatchAddEdit.cpp
 	PostProcessingConfigDiag.cpp
 	SoftwareVideoConfigDialog.cpp
 	TASInputDlg.cpp
+    Updater.cpp
 	VideoConfigDiag.cpp
 	WxEventUtils.cpp
 	WXInputBase.cpp
 	WxUtils.cpp)
 
-set(NOGUI_SRCS MainNoGUI.cpp)
+set(NOGUI_SRCS Main.cpp MainNoGUI.cpp)
 
 if(USE_X11)
 	set(GUI_SRCS ${GUI_SRCS} X11Utils.cpp)
@@ -90,7 +92,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	set(WXLIBS ${WXLIBS} dl)
 endif()
 
-list(APPEND LIBS core uicommon)
+list(APPEND LIBS core SlippiPlaybackStatus uicommon)
 
 if(APPLE)
 	if(wxWidgets_FOUND)
@@ -219,10 +221,11 @@ if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} ${DOLPHIN_EXE})
 endif()
 
-if(USE_X11 OR ENABLE_HEADLESS)
+# Only build -nogui binaries when ENABLE_HEADLESS is on
+if(USE_X11 AND ENABLE_HEADLESS)
 	set(DOLPHIN_NOGUI_EXE ${DOLPHIN_EXE_BASE}-nogui)
 	add_executable(${DOLPHIN_NOGUI_EXE} ${SRCS} ${NOGUI_SRCS})
-	target_link_libraries(${DOLPHIN_NOGUI_EXE} ${LIBS})
+	target_link_libraries(${DOLPHIN_NOGUI_EXE} ${LIBS} ${WXLIBS})
 	set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} ${DOLPHIN_NOGUI_EXE})
 	install(TARGETS ${DOLPHIN_NOGUI_EXE} RUNTIME DESTINATION ${bindir})
 endif()

@@ -15,6 +15,7 @@
 #include "DiscIO/NANDContentLoader.h"
 #include "DolphinWX/Globals.h"
 #include "DolphinWX/WxUtils.h"
+#include "UICommon/AutoUpdate.h"
 
 wxDEFINE_EVENT(EVT_POPULATE_PERSPECTIVES_MENU, MainMenuBar::PopulatePerspectivesEvent);
 
@@ -484,6 +485,13 @@ wxMenu* MainMenuBar::CreateHelpMenu() const
 	help_menu->Append(IDM_HELP_ONLINE_DOCS, _("Online &Documentation"));
 	help_menu->Append(IDM_HELP_GITHUB, _("&GitHub Repository"));
 	help_menu->AppendSeparator();
+
+    if (AutoUpdateChecker::SystemSupportsAutoUpdates())
+    {
+        help_menu->Append(IDM_CHECK_FOR_UPDATES, _("&Check for Updates..."));
+        help_menu->AppendSeparator();
+    }
+
 	help_menu->Append(wxID_ABOUT, _("&About"));
 
 	return help_menu;

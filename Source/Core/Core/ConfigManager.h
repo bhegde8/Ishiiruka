@@ -23,6 +23,9 @@ enum class Language;
 #define BACKEND_ALSA "ALSA"
 #define BACKEND_AOSOUND "AOSound"
 #define BACKEND_COREAUDIO "CoreAudio"
+#define BACKEND_CUBEB "Cubeb"
+#define BACKEND_EXCLUSIVE_WASAPI "Exclusive WASAPI"
+#define BACKEND_SHARED_WASAPI "Shared-mode WASAPI"
 #define BACKEND_DIRECTSOUND "DSound"
 #define BACKEND_OPENAL "OpenAL"
 #define BACKEND_PULSEAUDIO "Pulse"
@@ -43,6 +46,19 @@ enum GameType
 	GAMETYPE_OTHER,
 	GAMETYPE_MELEE_NTSC,
 	GAMETYPE_MELEE_20XX
+};
+
+enum PollingMethod
+{
+	POLLING_CONSOLE = 0,
+	POLLING_ONSIREAD = 1
+};
+
+enum MeleeLagReductionCode
+{
+    MELEE_LAG_REDUCTION_CODE_UNSET = 0,
+    MELEE_LAG_REDUCTION_CODE_NORMAL = 1,
+    MELEE_LAG_REDUCTION_CODE_PERFORMANCE = 2
 };
 
 struct SConfig : NonCopyable
@@ -108,6 +124,16 @@ struct SConfig : NonCopyable
 	bool bEnableCheats = false;
 	bool bEnableMemcardSdWriting = true;
 	bool bAllowAllNetplayVersions = false;
+	bool bQoSEnabled = true;
+	bool bAdapterWarning = true;
+
+    MeleeLagReductionCode iLagReductionCode = MELEE_LAG_REDUCTION_CODE_UNSET;
+    bool bHasShownLagReductionWarning = false;
+    bool bMeleeForceWidescreen = false;
+
+	bool m_slippiSaveReplays = true;
+	bool m_slippiReplayMonthFolders = false;
+	std::string m_strSlippiReplayDir;
 
 	bool bDPL2Decoder = false;
 	bool bTimeStretching = false;
@@ -123,6 +149,8 @@ struct SConfig : NonCopyable
 	bool bFastDiscSpeed = false;
 	int iVideoRate = 8;
 	bool bHalfAudioRate = false;
+
+	PollingMethod iPollingMethod = POLLING_CONSOLE;
 
 	bool bSyncGPU = false;
 	int iSyncGpuMaxDistance;
@@ -158,6 +186,7 @@ struct SConfig : NonCopyable
 	std::string m_analytics_id;
 	bool m_analytics_enabled = false;
 	bool m_analytics_permission_asked = false;
+	bool m_analytics_will_prompt = false;
 
 	// Bluetooth passthrough mode settings
 	bool m_bt_passthrough_enabled = false;
@@ -201,6 +230,7 @@ struct SConfig : NonCopyable
 	EBootType m_BootType;
 
 	std::string m_strVideoBackend;
+	std::string m_strSlippiInput;
 	std::string m_strGPUDeterminismMode;
 
 	// set based on the string version
@@ -238,6 +268,8 @@ struct SConfig : NonCopyable
 
 	std::string m_NANDPath;
 	std::string m_DumpPath;
+
+	int m_slippiOnlineDelay = 2;
 
 	std::string m_strMemoryCardA;
 	std::string m_strMemoryCardB;
@@ -323,6 +355,10 @@ struct SConfig : NonCopyable
 	bool m_BackgroundInput;
 	bool m_AdapterRumble[4];
 	bool m_AdapterKonga[4];
+    
+    // Auto-update settings
+    std::string m_auto_update_track;
+    std::string m_auto_update_hash_override;
 
 	// Network settings
 	bool m_SSLDumpRead;
@@ -361,6 +397,7 @@ private:
 	void SaveNetworkSettings(IniFile& ini);
 	void SaveAnalyticsSettings(IniFile& ini);
 	void SaveBluetoothPassthroughSettings(IniFile& ini);
+    void SaveAutoUpdateSettings(IniFile& ini);
 	void SaveSysconfSettings(IniFile& ini);
 
 	void LoadGeneralSettings(IniFile& ini);
@@ -375,6 +412,7 @@ private:
 	void LoadNetworkSettings(IniFile& ini);
 	void LoadAnalyticsSettings(IniFile& ini);
 	void LoadBluetoothPassthroughSettings(IniFile& ini);
+    void LoadAutoUpdateSettings(IniFile& ini);
 	void LoadSysconfSettings(IniFile& ini);
 
 	static SConfig* m_Instance;

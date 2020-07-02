@@ -14,6 +14,7 @@
 #include "Common/MsgHandler.h"
 #include "Common/StringUtil.h"
 #include "Common/SysConf.h"
+#include "Common/scmrev.h"
 
 #include "Core/Boot/Boot.h"
 #include "Core/Boot/Boot_DOL.h"
@@ -107,6 +108,7 @@ void SConfig::SaveSettings()
 	SaveAnalyticsSettings(ini);
 	SaveNetworkSettings(ini);
 	SaveBluetoothPassthroughSettings(ini);
+    SaveAutoUpdateSettings(ini);
 	SaveSysconfSettings(ini);
 
 	ini.Save(File::GetUserPath(F_DOLPHINCONFIG_IDX));
@@ -275,6 +277,10 @@ void SConfig::SaveCoreSettings(IniFile& ini)
 	core->Set("TimeStretching", bTimeStretching);
 	core->Set("RSHACK", bRSHACK);
 	core->Set("Latency", iLatency);
+	core->Set("SlippiOnlineDelay", m_slippiOnlineDelay);
+	core->Set("SlippiSaveReplays", m_slippiSaveReplays);
+	core->Set("SlippiReplayMonthFolders", m_slippiReplayMonthFolders);
+	core->Set("SlippiReplayDir", m_strSlippiReplayDir);
 	core->Set("MemcardAPath", m_strMemoryCardA);
 	core->Set("MemcardBPath", m_strMemoryCardB);
 	core->Set("AgpCartAPath", m_strGbaCartA);
@@ -305,6 +311,9 @@ void SConfig::SaveCoreSettings(IniFile& ini)
 	core->Set("EnableCustomRTC", bEnableCustomRTC);
 	core->Set("CustomRTCValue", m_customRTCValue);
 	core->Set("AllowAllNetplayVersions", bAllowAllNetplayVersions);
+	core->Set("QoSEnabled", bQoSEnabled);
+	core->Set("AdapterWarning", bAdapterWarning);
+    core->Set("ShownLagReductionWarning", bHasShownLagReductionWarning);
 }
 
 void SConfig::SaveMovieSettings(IniFile& ini)
@@ -374,6 +383,14 @@ void SConfig::SaveBluetoothPassthroughSettings(IniFile& ini)
 	section->Set("VID", m_bt_passthrough_vid);
 	section->Set("PID", m_bt_passthrough_pid);
 	section->Set("LinkKeys", m_bt_passthrough_link_keys);
+}
+
+void SConfig::SaveAutoUpdateSettings(IniFile& ini)
+{
+  IniFile::Section* section = ini.GetOrCreateSection("AutoUpdate");
+
+  section->Set("UpdateTrack", m_auto_update_track);
+  section->Set("HashOverride", m_auto_update_hash_override);
 }
 
 void SConfig::SaveSysconfSettings(IniFile& ini)
@@ -586,6 +603,16 @@ void SConfig::LoadCoreSettings(IniFile& ini)
 	core->Get("TimeStretching", &bTimeStretching, false);
 	core->Get("RSHACK", &bRSHACK, false);
 	core->Get("Latency", &iLatency, 2);
+	core->Get("SlippiOnlineDelay", &m_slippiOnlineDelay, 2);
+	core->Get("SlippiSaveReplays", &m_slippiSaveReplays, true);
+	core->Get("SlippiReplayMonthFolders", &m_slippiReplayMonthFolders, false);
+#ifdef _WIN32
+	core->Get("SlippiReplayDir", &m_strSlippiReplayDir,
+		File::GetHomeDirectory() + "\\Slippi");
+#else
+	core->Get("SlippiReplayDir", &m_strSlippiReplayDir,
+		File::GetHomeDirectory() + DIR_SEP + "Slippi");
+#endif
 	core->Get("MemcardAPath", &m_strMemoryCardA);
 	core->Get("MemcardBPath", &m_strMemoryCardB);
 	core->Get("AgpCartAPath", &m_strGbaCartA);
@@ -630,6 +657,9 @@ void SConfig::LoadCoreSettings(IniFile& ini)
 	// Default to seconds between 1.1.1970 and 1.1.2000
 	core->Get("CustomRTCValue", &m_customRTCValue, 946684800);
 	core->Get("AllowAllNetplayVersions", &bAllowAllNetplayVersions, false);
+	core->Get("QoSEnabled", &bQoSEnabled, true);
+	core->Get("AdapterWarning", &bAdapterWarning, true);
+    core->Get("ShownLagReductionWarning", &bHasShownLagReductionWarning, false);
 }
 
 void SConfig::LoadMovieSettings(IniFile& ini)
@@ -665,6 +695,10 @@ void SConfig::LoadDSPSettings(IniFile& ini)
 #endif
 	dsp->Get("Volume", &m_Volume, 100);
 	dsp->Get("CaptureLog", &m_DSPCaptureLog, false);
+
+	// fix 5.8b style setting
+	if(sBackend == "Exclusive-mode WASAPI")
+		sBackend = "Exclusive WASAPI on default device";
 
 	m_IsMuted = false;
 }
@@ -711,6 +745,14 @@ void SConfig::LoadBluetoothPassthroughSettings(IniFile& ini)
 	section->Get("VID", &m_bt_passthrough_vid, -1);
 	section->Get("PID", &m_bt_passthrough_pid, -1);
 	section->Get("LinkKeys", &m_bt_passthrough_link_keys, "");
+}
+
+void SConfig::LoadAutoUpdateSettings(IniFile& ini)
+{
+    IniFile::Section* section = ini.GetOrCreateSection("AutoUpdate");
+
+    section->Get("UpdateTrack", &m_auto_update_track, SCM_UPDATE_TRACK_STR);
+    section->Get("HashOverride", &m_auto_update_hash_override, "");
 }
 
 void SConfig::LoadSysconfSettings(IniFile& ini)
@@ -768,6 +810,7 @@ void SConfig::LoadDefaults()
 	iBBDumpPort = -1;
 	iVideoRate = 8;
 	bHalfAudioRate = false;
+	iPollingMethod = POLLING_CONSOLE;
 	bSyncGPU = false;
 	bFastDiscSpeed = false;
 	m_strWiiSDCardPath = File::GetUserPath(F_WIISDCARD_IDX);
@@ -880,7 +923,7 @@ bool SConfig::AutoSetup(EBootBS2 _BootBS2)
 			m_strGameID = pVolume->GetGameID();
 			m_revision = pVolume->GetRevision();
 
-			if(m_strGameID == "GALE01")
+			if(m_strGameID == "GALE01" || m_strGameID == "GALJ01")
 			{
 				m_gameType = GAMETYPE_MELEE_NTSC;
 

@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugFast|x64">
+      <Configuration>DebugFast</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -12,6 +16,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8C60E805-0DA5-4E25-8F84-038DB504BB0D}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -25,6 +30,9 @@
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='DebugFast'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -34,7 +42,24 @@
     <Import Project="..\..\VSProps\PCHUse.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ExternalsDir)nlohmann;${ExternalsDir}open-vcdiff;$(ExternalsDir)SlippiLib;$(ExternalsDir)semver;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugFast|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ExternalsDir)nlohmann;${ExternalsDir}open-vcdiff;$(ExternalsDir)SlippiLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUGFAST;_WIN32_WINNT=0x0602;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ExternalsDir)nlohmann;$(ExternalsDir)SlippiLib;$(ExternalsDir)HDiffPatch;$(ExternalsDir)semver;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\DolphinWX\PlaybackSlider.cpp" />
     <ClCompile Include="ActionReplay.cpp" />
     <ClCompile Include="Analytics.cpp" />
     <ClCompile Include="ARDecrypt.cpp" />
@@ -127,6 +152,7 @@
     <ClCompile Include="HW\EXI_DeviceIPL.cpp" />
     <ClCompile Include="HW\EXI_DeviceMemoryCard.cpp" />
     <ClCompile Include="HW\EXI_DeviceMic.cpp" />
+    <ClCompile Include="HW\EXI_DeviceSlippi.cpp" />
     <ClCompile Include="HW\GCKeyboard.cpp" />
     <ClCompile Include="HW\GCKeyboardEmu.cpp" />
     <ClCompile Include="HW\GCMemcard.cpp" />
@@ -254,9 +280,18 @@
     <ClCompile Include="PowerPC\PPCTables.cpp" />
     <ClCompile Include="PowerPC\Profiler.cpp" />
     <ClCompile Include="PowerPC\SignatureDB.cpp" />
+    <ClCompile Include="SlippiTimer.cpp" />
+    <ClCompile Include="Slippi\SlippiGameFileLoader.cpp" />
+    <ClCompile Include="Slippi\SlippiMatchmaking.cpp" />
+    <ClCompile Include="Slippi\SlippiNetplay.cpp" />
+    <ClCompile Include="Slippi\SlippiPad.cpp" />
+    <ClCompile Include="Slippi\SlippiReplayComm.cpp" />
+    <ClCompile Include="Slippi\SlippiSavestate.cpp" />
+    <ClCompile Include="Slippi\SlippiUser.cpp" />
     <ClCompile Include="State.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\DolphinWX\PlaybackSlider.h" />
     <ClInclude Include="ActionReplay.h" />
     <ClInclude Include="Analytics.h" />
     <ClInclude Include="ARDecrypt.h" />
@@ -342,6 +377,7 @@
     <ClInclude Include="HW\EXI_DeviceIPL.h" />
     <ClInclude Include="HW\EXI_DeviceMemoryCard.h" />
     <ClInclude Include="HW\EXI_DeviceMic.h" />
+    <ClInclude Include="HW\EXI_DeviceSlippi.h" />
     <ClInclude Include="HW\GCKeyboard.h" />
     <ClInclude Include="HW\GCKeyboardEmu.h" />
     <ClInclude Include="HW\GCMemcard.h" />
@@ -444,6 +480,15 @@
     <ClInclude Include="PowerPC\PPCTables.h" />
     <ClInclude Include="PowerPC\Profiler.h" />
     <ClInclude Include="PowerPC\SignatureDB.h" />
+    <ClInclude Include="SlippiPlayback.h" />
+    <ClInclude Include="SlippiTimer.h" />
+    <ClInclude Include="Slippi\SlippiGameFileLoader.h" />
+    <ClInclude Include="Slippi\SlippiMatchmaking.h" />
+    <ClInclude Include="Slippi\SlippiNetplay.h" />
+    <ClInclude Include="Slippi\SlippiPad.h" />
+    <ClInclude Include="Slippi\SlippiReplayComm.h" />
+    <ClInclude Include="Slippi\SlippiSavestate.h" />
+    <ClInclude Include="Slippi\SlippiUser.h" />
     <ClInclude Include="State.h" />
   </ItemGroup>
   <ItemGroup>
@@ -459,6 +504,9 @@
     <ProjectReference Include="$(ExternalsDir)libusb\libusb_static_2013.vcxproj">
       <Project>{349ee8f9-7d25-4909-aaf5-ff3fade72187}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\Externals\cubeb\msvc\cubeb.vcxproj">
+      <Project>{8ea11166-6512-44fc-b7a5-a4d1ecc81170}</Project>
+    </ProjectReference>
     <ProjectReference Include="$(ExternalsDir)LZO\LZO.vcxproj">
       <Project>{ab993f38-c31d-4897-b139-a620c42bc565}</Project>
     </ProjectReference>
@@ -467,9 +515,6 @@
     </ProjectReference>
     <ProjectReference Include="$(ExternalsDir)mbedtls\mbedTLS.vcxproj">
       <Project>{bdb6578b-0691-4e80-a46c-df21639fd3b8}</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(ExternalsDir)portaudio\build\portaudio.vcxproj">
-      <Project>{0a18a071-125e-442f-aff7-a3f68abecf99}</Project>
     </ProjectReference>
     <ProjectReference Include="$(ExternalsDir)SFML\build\vc2010\SFML_Network.vcxproj">
       <Project>{93d73454-2512-424e-9cda-4bb357fe13dd}</Project>
@@ -491,6 +536,21 @@
     </ProjectReference>
     <ProjectReference Include="$(CoreDir)VideoCommon\VideoCommon.vcxproj">
       <Project>{3de9ee35-3e91-4f27-a014-2866ad8c3fe3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Externals\nlohmann\nlohmann.vcxproj">
+      <Project>{732d2110-06a3-4aa1-9634-7bb5a4f75b82}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Externals\open-vcdiff\open-vcdiff.vcxproj">
+      <Project>{9193a8de-bc2e-458c-b52e-510457eee4b8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Externals\semver\semver.vcxproj">
+      <Project>{1bc426c4-af38-4c29-a925-02406bc00490}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Externals\SlippiLib\SlippiLib.vcxproj">
+      <Project>{ff39260b-839a-4a6c-a117-caa73c1683f5}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\SlippiPlayback\SlippiPlayback.vcxproj">
+      <Project>{0ebbdafa-3a7d-46d0-b0ee-f53d7dd6f571}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

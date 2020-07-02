@@ -123,6 +123,9 @@ bool DeleteDirRecursively(const std::string& directory);
 // Returns the current directory
 std::string GetCurrentDir();
 
+// Gets the mod time of a file
+u64 GetFileModTime(const std::string &path);
+
 // Create directory and copy contents (does not overwrite existing files)
 void CopyDir(const std::string& source_path, const std::string& dest_path);
 
@@ -153,7 +156,10 @@ std::string GetSysDirectory();
 std::string GetBundleDirectory();
 #endif
 
+std::string GetExePath();
 std::string& GetExeDirectory();
+
+std::string GetHomeDirectory();
 
 bool WriteStringToFile(const std::string& str, const std::string& filename);
 bool ReadFileToString(const std::string& filename, std::string& str);
@@ -167,6 +173,7 @@ public:
 	IOFile();
 	IOFile(std::FILE* file);
 	IOFile(const std::string& filename, const char openmode[]);
+	IOFile(const std::string & filename, const char openmode[], int shflag);
 
 	~IOFile();
 
@@ -176,6 +183,7 @@ public:
 	void Swap(IOFile& other) noexcept;
 
 	bool Open(const std::string& filename, const char openmode[]);
+	bool OpenShared(const std::string & filename, const char openmode[], int shflag);
 	bool Close();
 
 	template <typename T>

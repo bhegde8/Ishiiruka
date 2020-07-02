@@ -13,7 +13,7 @@ Please read the [FAQ](https://dolphin-emu.org/docs/faq/) before using Dolphin.
 * OS
     * Windows (7 SP1 or higher is officially supported, but Vista SP2 might also work).
     * Linux.
-    * macOS (10.10 Yosemite or higher).
+    * macOS (10.13 High Sierra or higher).
     * Unix-like systems other than Linux are not officially supported but might work.
 * Processor
     * A CPU with SSE2 support.
@@ -34,10 +34,14 @@ Please read the [FAQ](https://dolphin-emu.org/docs/faq/) before using Dolphin.
 Dolphin can only be installed on devices that satisfy the above requirements. Attempting to install on an unsupported device will fail and display an error message.
 
 ## Building for Windows
-Use the solution file `Source/dolphin-emu.sln` to build Dolphin on Windows.
-Visual Studio 2015 Update 2 is a hard requirement. Other compilers might be
+Open the solution file `Source/Dolphin.sln` to build Dolphin on Windows using [Visual Studio 2017](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15).
+Other compilers might be
 able to build Dolphin on Windows but have not been tested and are not
-recommended to be used. Git and Windows 10 SDK 10.0.10586.0 must be installed.
+recommended to be used. Git and Windows 10 SDK 10.0.15063.0 must be installed. You can install these using the Visual Studio installer as indicated here: https://github.com/dolphin-emu/dolphin/wiki/Building-for-Windows.
+
+You also need the June 2010 DirectX SDK, you can [download it here](http://www.microsoft.com/en-us/download/details.aspx?id=6812). You will most likely have issues installing this, look at [this comment](https://stackoverflow.com/a/9401911) for how to fix it. Not sure everything in it is a hard requirement.
+
+If you have trouble with some `.lib` files missing, right click the Externals directory and click rebuild.
 
 An installer can be created by using the `Installer.nsi` script in the
 Installer directory. This will require the Nullsoft Scriptable Install System
@@ -58,6 +62,11 @@ missing packages yourself.
 
 An application bundle will be created in `./Binaries`.
 
+If you are building on Mojave, you will need to install the 10.11 and 10.14 SDKs to build because Quicktime has been removed in the latest SDKs. Find the sdk version here https://github.com/phracker/MacOSX-SDKs and copy it to 
+`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs`. You should not need to modify the plist file as the project readme seems to indicate.
+
+If you are building on Catalina, you only need to install the 10.14 SDK. However you will also need to install wxWidgets from source. Details on how to do this can be found by reading the CI script (https://github.com/project-slippi/Ishiiruka/blob/slippi/.github/workflows/main.yml#L109-L206).
+
 ### Linux Global Build Steps:
 
 To install to your system.
@@ -76,7 +85,7 @@ Useful for development as root access is not required.
 2. `cd Build`
 3. `cmake .. -DLINUX_LOCAL_DEV=true`
 4. `make`
-5. `ln -s ../../Data/Sys Binaries/`
+5. `ln -s ../../Overwrite/{Sys,User} Binaries/`
 
 ### Linux Portable Build Steps:
 
@@ -87,7 +96,7 @@ Or useful for having multiple distinct Dolphin setups for testing/development/TA
 2. `cd Build`
 3. `cmake .. -DLINUX_LOCAL_DEV=true`
 4. `make`
-5. `cp -r ../Data/Sys/ Binaries/`
+5. `cp -r ../Overwrite/{Sys,User} Binaries/`
 6. `touch Binaries/portable.txt`
 
 ## Building for Android

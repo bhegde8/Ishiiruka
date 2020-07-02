@@ -74,6 +74,7 @@
 #include "DolphinWX/NetPlay/NetPlaySetupFrame.h"
 #include "DolphinWX/NetPlay/NetWindow.h"
 #include "DolphinWX/TASInputDlg.h"
+#include "DolphinWX/Updater.h"
 #include "DolphinWX/WXInputBase.h"
 #include "DolphinWX/WxEventUtils.h"
 #include "DolphinWX/WxUtils.h"
@@ -83,6 +84,8 @@
 #include "VideoCommon/RenderBase.h"
 #include "VideoCommon/VideoBackendBase.h"
 #include "VideoCommon/VideoConfig.h"
+
+#include "Common/Logging/Log.h"
 
 class InputConfig;
 class wxFrame;
@@ -182,6 +185,7 @@ void CFrame::BindMenuBarEvents()
 	Bind(wxEVT_MENU, &CFrame::OnHelp, this, IDM_HELP_WEBSITE);
 	Bind(wxEVT_MENU, &CFrame::OnHelp, this, IDM_HELP_ONLINE_DOCS);
 	Bind(wxEVT_MENU, &CFrame::OnHelp, this, IDM_HELP_GITHUB);
+	Bind(wxEVT_MENU, &CFrame::OnHelp, this, IDM_CHECK_FOR_UPDATES);
 	Bind(wxEVT_MENU, &CFrame::OnHelp, this, wxID_ABOUT);
 
 	if (UseDebugger)
@@ -848,6 +852,12 @@ void CFrame::DoStop()
 		if (NetPlayDialog::GetNetPlayClient())
 			NetPlayDialog::GetNetPlayClient()->Stop();
 
+		if (m_Mgr->GetPane(_("Slippi Pane")).IsShown()) {
+			m_Mgr->GetPane(_("Slippi Pane")).Hide();
+			if (m_slippi_timer)
+			  delete m_slippi_timer;
+		}
+
 		if (!m_tried_graceful_shutdown && TriggerSTMPowerEvent())
 		{
 			m_tried_graceful_shutdown = true;
@@ -857,6 +867,27 @@ void CFrame::DoStop()
 		Core::Stop();
 		UpdateGUI();
 	}
+}
+
+void CFrame::DoExit()
+{
+	Close(true);
+}
+
+void CFrame::RaiseRenderWindow()
+{
+	if (SConfig::GetInstance().bRenderToMain)
+		return;
+
+	m_RenderFrame->Raise();
+}
+
+void CFrame::LowerRenderWindow()
+{
+	if (SConfig::GetInstance().bRenderToMain)
+		return;
+
+	m_RenderFrame->Lower();
 }
 
 bool CFrame::TriggerSTMPowerEvent()
@@ -1058,6 +1089,26 @@ void CFrame::OnHelp(wxCommandEvent& event)
 	case IDM_HELP_GITHUB:
 		WxUtils::Launch("https://github.com/dolphin-emu/dolphin");
 		break;
+    case IDM_CHECK_FOR_UPDATES:
+    {
+        auto& track = SConfig::GetInstance().m_auto_update_track;
+        auto previous_value = track;
+
+        track = "dev";
+
+        auto* updater = new Updater();
+
+        if (!updater->CheckForUpdate())
+        {
+            wxMessageDialog *dial = new wxMessageDialog(NULL, 
+                _("You are running the latest version available on this update track."), 
+                _("No updates found."), wxOK);
+            dial->ShowModal();
+        }
+
+        track = previous_value;
+    }
+        break;
 	}
 }
 

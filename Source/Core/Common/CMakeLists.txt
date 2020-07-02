@@ -7,6 +7,8 @@ set(SRCS Analytics.cpp
          FileUtil.cpp
          GekkoDisassembler.cpp
          Hash.cpp
+         HttpRequest.cpp
+         HttpRequest.h
          IniFile.cpp
          JitRegister.cpp
          MathUtil.cpp

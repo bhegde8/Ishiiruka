@@ -4,6 +4,9 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(dolphin-emu)
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(USE_EGL "Enables EGL OpenGL Interface" OFF)
 option(TRY_X11 "Enables X11 Support" ON)
 option(USE_SHARED_ENET "Use shared libenet if found rather than Dolphin's soon-to-compatibly-diverge version" OFF)
@@ -296,6 +299,7 @@ if(APPLE)
 	# Note that the SDK determines the maximum version of which optional
 	# features can be used, not the minimum required version to run.
 	set(OSX_MIN_VERSION "10.9")
+	set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk")
 	set(TARGET_FLAGS "${TARGET_FLAGS} -mmacosx-version-min=${OSX_MIN_VERSION}")
 	# Do not warn about frameworks that are not available on all architectures.
 	# This avoids a warning when linking with QuickTime.
@@ -306,7 +310,7 @@ if(APPLE)
 	# Target flags apply to both C and C++ compilation.
 	# CMake passes these to the compiler on the link command line as well.
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_FLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_FLAGS} -D__ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES=1")
 
 	# Linker flags.
 	# Drop unreachable code and data.
@@ -445,6 +449,9 @@ add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE)
 # externals.
 include(CheckLib)
 include(CheckCXXSourceRuns)
+
+# Don't use legacy openGL
+set(OpenGL_GL_PREFERENCE GLVND)
 
 include(FindOpenGL)
 if (OPENGL_GL)
@@ -656,7 +663,32 @@ endif()
 add_subdirectory(Externals/Bochs_disasm)
 include_directories(Externals/Bochs_disasm)
 
+message(STATUS "Using cpp-optparse from Externals")
+add_subdirectory(Externals/cpp-optparse)
+
+# Used in porting back the UpdaterCommon framework
+message(STATUS "Using optional-lite from Externals")
+include_directories(Externals/optional-lite/include)
+
+message(STATUS "Using picojson from Externals")
+include_directories(Externals/picojson)
+
+if (APPLE OR WIN32)
+  message(STATUS "Using ed25519 from Externals")
+  add_subdirectory(Externals/ed25519)
+  include_directories(Externals/ed25519)
+endif()
+
 add_subdirectory(Externals/glslang)
+
+add_subdirectory(Externals/SlippiLib)
+include_directories(Externals/SlippiLib)
+include_directories(Externals/nlohmann)
+add_subdirectory(Externals/semver)
+include_directories(Externals/semver/include)
+
+add_subdirectory(Externals/open-vcdiff)
+include_directories(Externals/open-vcdiff)
 
 if(USE_SHARED_ENET)
 	check_lib(ENET libenet enet enet/enet.h QUIET)
@@ -735,16 +767,10 @@ else()
 	set(PNG png)
 endif()
 
-if(NOT APPLE)
-	check_lib(SOUNDTOUCH soundtouch SoundTouch soundtouch/SoundTouch.h QUIET)
-endif()
-if (SOUNDTOUCH_FOUND)
-	message("Using shared soundtouch")
-else()
-	message("Using static soundtouch from Externals")
-	add_subdirectory(Externals/soundtouch)
-	include_directories(Externals)
-endif()
+# Always use soundtouch from Externals
+message("Using static soundtouch from Externals")
+add_subdirectory(Externals/soundtouch)
+include_directories(Externals)
 
 if(ENABLE_SDL)
 	include(FindSDL2 OPTIONAL)
@@ -834,6 +860,9 @@ else()
 	set(CURL_LIBRARIES curl)
 	include_directories(BEFORE Externals/curl/include)
 endif()
+
+add_subdirectory(Externals/cubeb)
+include_directories(BEFORE Externals/cubeb/include)
 
 if(NOT APPLE)
 	check_lib(SOIL "(no .pc for SOIL)" SOIL SOIL/SOIL.h QUIET)
@@ -1017,6 +1046,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/Source/Core/Common/scmrev.h
 	"#define SCM_BRANCH_STR \"" ${DOLPHIN_WC_BRANCH} "\"\n"
 	"#define SCM_IS_MASTER " ${DOLPHIN_WC_IS_STABLE} "\n"
 	"#define SCM_DISTRIBUTOR_STR \"" ${DISTRIBUTOR} "\"\n"
+    "#define SCM_UPDATE_TRACK_STR \"\"\n"
 	)
 include_directories("${PROJECT_BINARY_DIR}/Source/Core")
 

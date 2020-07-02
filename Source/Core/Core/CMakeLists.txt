@@ -12,6 +12,7 @@ set(SRCS	ActionReplay.cpp
 			HotkeyManager.cpp
 			MemTools.cpp
 			Movie.cpp
+			SlippiTimer.cpp
 			NetPlayClient.cpp
 			NetPlayServer.cpp
 			PatchEngine.cpp
@@ -94,6 +95,7 @@ set(SRCS	ActionReplay.cpp
 			HW/EXI_DeviceGecko.cpp
 			HW/EXI_DeviceIPL.cpp
 			HW/EXI_DeviceMemoryCard.cpp
+			HW/EXI_DeviceSlippi.cpp
 			HW/EXI_DeviceMic.cpp
 			HW/GCKeyboard.cpp
 			HW/GCKeyboardEmu.cpp
@@ -187,6 +189,13 @@ set(SRCS	ActionReplay.cpp
 			PowerPC/JitILCommon/JitILBase_Paired.cpp
 			PowerPC/JitILCommon/JitILBase_FloatingPoint.cpp
 			PowerPC/JitILCommon/JitILBase_Integer.cpp
+			Slippi/SlippiReplayComm.cpp
+			Slippi/SlippiGameFileLoader.cpp
+			Slippi/SlippiMatchmaking.cpp
+			Slippi/SlippiNetplay.cpp
+			Slippi/SlippiPad.cpp
+			Slippi/SlippiSavestate.cpp
+			Slippi/SlippiUser.cpp
 			)
 
 if(_M_X86)
@@ -233,12 +242,19 @@ set(LIBS
 	audiocommon
 	bdisasm
 	common
+	cubeb
 	discio
 	enet
 	inputcommon
 	${LZO}
+	semver
 	sfml-network
 	sfml-system
+	SlippiPlaybackStatus
+	SlippiLib
+	vcdcom
+	vcddec
+	vcdenc
 	videoogl
 	videosoftware
 	z
