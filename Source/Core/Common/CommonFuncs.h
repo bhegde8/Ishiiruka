@@ -13,6 +13,8 @@
 #include <string>
 #include "Common/CommonTypes.h"
 
+#include <optional-lite/include/nonstd/optional.hpp>
+
 // Will fail to compile on a non-array:
 template <typename T, size_t N>
 constexpr size_t ArraySize(T(&arr)[N])
@@ -103,6 +105,19 @@ extern "C" {
 // This function might change the error code.
 // Defined in Misc.cpp.
 std::string GetLastErrorMsg();
+
+// Wrapper function to get last strerror(errno) string.
+// This function might change the error code.
+std::string LastStrerrorString();
+
+#ifdef _WIN32
+// Wrapper function to get GetLastError() string.
+// This function might change the error code.
+std::string GetLastErrorString();
+
+// Obtains a full path to the specified module.
+nonstd::optional<std::wstring> GetModuleName(void* hInstance);
+#endif
 
 namespace Common
 {

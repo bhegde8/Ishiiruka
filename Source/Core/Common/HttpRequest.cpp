@@ -39,7 +39,7 @@ public:
   std::string EscapeComponent(const std::string& string);
 
 private:
-  static inline std::once_flag s_curl_was_initialized;
+  static std::once_flag s_curl_was_initialized;
   ProgressCallback m_callback;
   std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> m_curl{nullptr, curl_easy_cleanup};
   std::string m_error_string;

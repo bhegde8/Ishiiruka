@@ -733,14 +733,20 @@ std::string GetExePath()
   static const std::string dolphin_path = [] {
     std::string result;
 #ifdef _WIN32
-	TCHAR Dolphin_exe_Path[2048];
-	TCHAR Dolphin_exe_Clean_Path[MAX_PATH];
-	GetModuleFileName(nullptr, Dolphin_exe_Path, 2048);
-	if (_tfullpath(Dolphin_exe_Clean_Path, Dolphin_exe_Path, MAX_PATH) != nullptr)
-		result = TStrToUTF8(Dolphin_exe_Clean_Path);
-	else
-		result = TStrToUTF8(Dolphin_exe_Path);
-		result = dolphin_path.substr(0, result.find_last_of('\\'));
+	auto dolphin_exe_path = GetModuleName(nullptr);
+	if (dolphin_exe_path)
+	{
+		std::unique_ptr<TCHAR[], decltype(&std::free)> dolphin_exe_expanded_path{
+			_tfullpath(nullptr, dolphin_exe_path->c_str(), 0), std::free };
+		if (dolphin_exe_expanded_path)
+		{
+			result = TStrToUTF8(dolphin_exe_expanded_path.get());
+		}
+		else
+		{
+			result = TStrToUTF8(*dolphin_exe_path);
+		}
+	}
 #elif defined(__APPLE__)
     result = GetBundleDirectory();
     result = result.substr(0, result.find_last_of("Dolphin.app/Contents/MacOS") + 1);
@@ -795,13 +801,10 @@ std::string GetHomeDirectory()
 	wchar_t *path = nullptr;
 	
 	if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &path))) {
-		char pathStr[MAX_PATH];
-		wcstombs(pathStr, path, MAX_PATH);
-	
-		homeDir = std::string(pathStr);
-		CoTaskMemFree(path);		
+		homeDir = UTF16ToUTF8(path);
 	}
-	else {
+	else
+	{
 		const char* home = getenv("USERPROFILE");
 		homeDir = std::string(home) + "\\Documents";
 	}
